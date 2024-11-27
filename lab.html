@@ -88,11 +88,11 @@
       <h3>Total: {{ cartTotal }} dhs</h3>
 
       <h2>Checkout</h2>
-      <p><strong>First Name:</strong> <input v-model="order.firstName"></p>
-      <p><strong>Last Name:</strong> <input v-model="order.lastName"></p>
-      <p><strong>Address:</strong><input v-model="order.address"></p>
+      <p><strong>First Name:</strong> <input v-model="order.firstName" /></p>
+      <p><strong>Last Name:</strong> <input v-model="order.lastName" /></p>
+      <p><strong>Address:</strong><input v-model="order.address" /></p>
       <p><strong>Phone number:</strong> <input v-model.number="order.phone" type="number" /></p>
-      <p><strong>Zip/Postal:</strong> <input v-model="order.zip"></p>
+      <p><strong>Zip/Postal:</strong> <input v-model="order.zip" /></p>
 
       <h2>Order Information</h2>
       <p>First Name: {{ order.firstName }}</p>
@@ -100,7 +100,9 @@
       <p>Address: {{ order.address }}</p>
       <p>Phone number: {{ order.phone }}</p>
       <p>Zip: {{ order.zip }}</p>
-      <button v-on:click="submitForm">Place Order</button>
+
+      <!-- Place Order Button -->
+      <button v-if="isFormComplete" v-on:click="submitForm">Place Order</button>
       <button v-on:click="showCheckout">Go back to products</button>
     </div>
   </div>
@@ -146,6 +148,16 @@
           return this.sortedLessons.filter(lesson =>
             lesson.subject.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
             lesson.Location.toLowerCase().includes(this.searchQuery.toLowerCase())
+          );
+        },
+        isFormComplete() {
+          // Check if all required fields are filled
+          return (
+            this.order.firstName &&
+            this.order.lastName &&
+            this.order.address &&
+            this.order.phone &&
+            this.order.zip
           );
         }
       },
@@ -206,26 +218,28 @@
                 lessonId: item.lesson.id,
                 subject: item.lesson.subject,
                 price: item.lesson.price,
-                quantity: item.quantity,
-              })),
-              total: this.cartTotal,
+                quantity: item.quantity
+              }))
             };
-            fetch("http://localhost:3000/collection/orders", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(orderDetails),
-            })
-              .then(response => {
-                if (response.ok) alert("Order placed successfully!");
-                else alert("Failed to place order.");
-              })
-              .catch(error => console.error("Order submission error:", error));
-          } else alert("Please fill in all required fields.");
+            console.log('Order submitted:', orderDetails);
+            alert('Order placed successfully!');
+            this.resetOrder();
+          }
+        },
+        resetOrder() {
+          this.cart = [];
+          this.order = {
+            firstName: "",
+            lastName: "",
+            address: "",
+            phone: "",
+            zip: ""
+          };
         }
       },
-      mounted() {
+      created() {
         this.fetchProducts();
-      },
+      }
     });
   </script>
 </body>
