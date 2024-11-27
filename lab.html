@@ -100,7 +100,9 @@
       <p>Address: {{ order.address }}</p>
       <p>Phone number: {{ order.phone }}</p>
       <p>Zip: {{ order.zip }}</p>
-      <button v-on:click="submitForm">Place Order</button>
+
+      <!-- "Place Order" Button -->
+      <button v-on:click="submitForm" :disabled="!isFormValid">Place Order</button>
     </div>
   </div>
 
@@ -145,6 +147,16 @@
           return this.sortedLessons.filter(lesson =>
             lesson.subject.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
             lesson.Location.toLowerCase().includes(this.searchQuery.toLowerCase())
+          );
+        },
+        // Computed property to check if all fields are filled out for the order
+        isFormValid() {
+          return (
+            this.order.firstName.trim() &&
+            this.order.lastName.trim() &&
+            this.order.address.trim() &&
+            this.order.phone &&
+            this.order.zip.trim()
           );
         }
       },
@@ -200,29 +212,21 @@
                 lessonId: item.lesson.id,
                 subject: item.lesson.subject,
                 price: item.lesson.price,
-                quantity: item.quantity,
-              })),
-              total: this.cartTotal,
+                quantity: item.quantity
+              }))
             };
-            fetch("http://localhost:3000/collection/orders", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(orderDetails),
-            })
-              .then(response => {
-                if (!response.ok) throw new Error("Failed to place the order.");
-                alert("Your order has been placed!");
-                this.cart = [];
-                this.order = { firstName: "", lastName: "", address: "", phone: "", zip: "" };
-                this.showProduct = true;
-              })
-              .catch(error => alert("Something went wrong. Please try again later."));
+            console.log("Order submitted:", orderDetails);
+            // Optionally clear cart and form here
+            this.cart = [];
+            this.order = { firstName: "", lastName: "", address: "", phone: "", zip: "" };
+            this.showProduct = true;
+            alert('Order placed successfully!');
           } else {
-            alert("Please fill out all fields before submitting your order.");
+            alert('Please fill in all fields.');
           }
         }
       },
-      mounted() {
+      created() {
         this.fetchProducts();
       }
     });
