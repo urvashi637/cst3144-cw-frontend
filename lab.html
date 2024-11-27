@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lesson</title>
+  <script src="https://cdn.jsdelivr.net/npm/vue@2.7.16/dist/vue.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css">
+  <link rel="stylesheet" type="text/css" href="styling.css">
+</head>
+
+<body>
+  <div id="app">
+    <header>
+      <div class="header-content">
+        <h1 v-text="sitename"></h1>
+        <button v-on:click="showCheckout" class="checkout-button" :disabled="cartItemCount === 0">
+          {{ cartItemCount }} <span class="fas fa-cart-plus"></span> Checkout
+        </button>
+      </div>
+    </header>
+
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+      <div class="search-sort-container">
+        <div class="search-bar">
+          <input type="text" v-model="searchQuery" placeholder="Search lessons..." />
+        </div>
+
+        <!-- Sorting Section -->
+        <div class="sort-options">
+          <select v-model="sortAttribute" class="sort-dropdown">
+            <option value="price">Price</option>
+            <option value="subject">Subject</option>
+            <option value="Location">Location</option>
+            <option value="availableInventory">Available Spaces</option>
+          </select>
+          <select v-model="sortOrder" class="sort-dropdown">
+            <option value="asc">Ascending</option>
+            <option value="desc">Descending</option>
+          </select>
+        </div>
+      </div>
+    </nav>
+
+    <div v-if="showProduct">
+      <main class="lesson-container">
+        <div class="lesson-row" v-for="(startIndex, rowIndex) in generateRowIndices()" :key="'row-' + rowIndex">
+          <div class="lesson-info" v-for="lesson in filteredLessons.slice(startIndex, startIndex + 2)" :key="lesson.id">
+            <figure class="lesson-image">
+              <img v-bind:src="lesson.image" :alt="lesson.subject + ' Image'" />
+            </figure>
+            <div class="lesson-details">
+              <h2 v-text="lesson.subject"></h2>
+              <p v-text="lesson.Location"></p>
+              <p>Price: {{ lesson.price }} dhs</p>
+              <p v-if="lesson.availableInventory > 0">Available spaces: {{ lesson.availableInventory }}</p>
+              <p v-else>Sold Out</p>
+
+              <!-- Rating Display -->
+              <div class="lesson-rating">
+                <span v-for="n in Math.min(lesson.rating || 0, 5)" class="filled-star">★</span>
+                <span v-for="n in Math.max(0, 5 - (lesson.rating || 0))" class="empty-star">☆</span>
+              </div>
+
+              <button v-on:click="addToCart(lesson)" v-if="canAddToCart(lesson)">Add to cart</button>
+              <button disabled v-else>Sold Out</button>
+              <p v-if="lesson.availableInventory > 0">{{ lesson.availableInventory }} items left!</p>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <!-- Checkout Section -->
+    <div v-else class="checkout-page">
+      <h2>Lessons in Cart</h2>
+      <ul>
+        <li v-for="(item, index) in cart" :key="item.lesson.id">
+          {{ item.lesson.subject }} - {{ item.lesson.price }} dhs (Quantity: {{ item.quantity }})
+          <button v-on:click="decreaseQuantity(index)" v-if="item.quantity > 1">-</button>
+          <button v-on:click="increaseQuantity(index)" v-if="item.quantity < 5">+</button>
+          <button v-on:click="removeFromCart(index)">Remove</button>
+        </li>
+      </ul>
+      <h3>Total: {{ cartTotal }} dhs</h3>
+
+      <h2>Checkout</h2>
+      <p><strong>First Name:</strong> <input v-model="order.firstName"></p>
+      <p><strong>Last Name:</strong> <input v-model="order.lastName"></p>
+      <p><strong>Address:</strong><input v-model="order.address"></p>
+      <p><strong>Phone number:</strong> <input v-model.number="order.phone" type="number" /></p>
+      <p><strong>Zip/Postal:</strong> <input v-model="order.zip"></p>
+
+      <h2>Order Information</h2>
+      <p>First Name: {{ order.firstName }}</p>
+      <p>Last Name: {{ order.lastName }}</p>
+      <p>Address: {{ order.address }}</p>
+      <p>Phone number: {{ order.phone }}</p>
+      <p>Zip: {{ order.zip }}</p>
+      <button v-on:click="submitForm">Place Order</button>
+      <button v-on:click="showCheckout">Go back to products</button>
+    </div>
+  </div>
+
+  <script type="text/javascript">
+    let webstore = new Vue({
+      el: '#app',
+      data: {
+        sitename: "After School Club",
+        showProduct: true,
+        sortAttribute: 'price',
+        sortOrder: 'asc',
+        searchQuery: "",
+        lessons: [], // Lessons will be populated by fetched data
+        cart: [],
+        order: {
+          firstName: "",
+          lastName: "",
+          address: "",
+          phone: "",
+          zip: ""
+        }
+      },
+      computed: {
+        cartItemCount() {
+          return this.cart.reduce((total, item) => total + item.quantity, 0);
+        },
+        cartTotal() {
+          return this.cart.reduce((total, item) => total + (item.lesson.price * item.quantity), 0);
+        },
+        sortedLessons() {
+          return this.lessons.sort((a, b) => {
+            let result = 0;
+            if (this.sortAttribute === 'price') result = a.price - b.price;
+            else if (this.sortAttribute === 'subject') result = a.subject.localeCompare(b.subject);
+            else if (this.sortAttribute === 'Location') result = a.Location.localeCompare(b.Location);
+            else if (this.sortAttribute === 'availableInventory') result = a.availableInventory - b.availableInventory;
+            return this.sortOrder === 'asc' ? result : -result;
+          });
+        },
+        filteredLessons() {
+          return this.sortedLessons.filter(lesson =>
+            lesson.subject.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
+            lesson.Location.toLowerCase().includes(this.searchQuery.toLowerCase())
+          );
+        }
+      },
+      methods: {
+        fetchProducts() {
+          fetch("http://localhost:3000/products") // Corrected endpoint
+            .then(response => {
+              if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+              }
+              return response.json();
+            })
+            .then(data => {
+              console.log("Fetched products:", data); // Debugging log
+              this.lessons = data; // Assuming "lessons" is the variable to hold the product list
+            })
+            .catch(error => {
+              console.error("Error fetching products:", error);
+              alert("Failed to load products. Please try again later.");
+            });
+        },
+        generateRowIndices() {
+          const rows = [];
+          const lessonsPerRow = 2;
+          for (let i = 0; i < this.filteredLessons.length; i += lessonsPerRow) rows.push(i);
+          return rows;
+        },
+        addToCart(lesson) {
+          const found = this.cart.find(item => item.lesson.id === lesson.id);
+          if (found) found.quantity++;
+          else this.cart.push({ lesson, quantity: 1 });
+          lesson.availableInventory--;
+        },
+        removeFromCart(index) {
+          const item = this.cart[index];
+          item.lesson.availableInventory += item.quantity;
+          this.cart.splice(index, 1);
+        },
+        increaseQuantity(index) {
+          const item = this.cart[index];
+          if (item.lesson.availableInventory > 0) {
+            item.quantity++;
+            item.lesson.availableInventory--;
+          }
+        },
+        decreaseQuantity(index) {
+          const item = this.cart[index];
+          if (item.quantity > 1) {
+            item.quantity--;
+            item.lesson.availableInventory++;
+          }
+        },
+        canAddToCart(lesson) {
+          return lesson.availableInventory > 0;
+        },
+        showCheckout() {
+          this.showProduct = !this.showProduct;
+        },
+
+        submitForm() {
+          console.log("Submit form initiated. Current order:", this.order);
+          console.log("Cart contents:", this.cart);
+
+          // Check if all required fields are filled
+          if (this.order.firstName && this.order.lastName && this.order.address && this.order.phone && this.order.zip) {
+            console.log("Order form validation passed.");
+
+            const orderDetails = {
+              ...this.order,
+              cart: this.cart.map(item => ({
+                lessonId: item.lesson.id,
+                subject: item.lesson.subject, // Include lesson name here
+                price: item.lesson.price, // Include price
+                quantity: item.quantity, // Include quantity
+              })),
+              total: this.cartTotal,
+            };
+
+            console.log("Order details prepared:", orderDetails);
+
+            fetch("http://localhost:3000/collection/orders", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(orderDetails),
+            })
+              .then(response => {
+                console.log("Server response received. Status code:", response.status);
+                if (!response.ok) {
+                  console.error("Server responded with an error. Status code:", response.status);
+                  throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+              })
+              .then(data => {
+                console.log("Server returned data:", data);
+                alert("Order placed successfully!");
+
+                // Clear the cart and reset the order form
+                this.cart = [];
+                this.order = { firstName: "", lastName: "", address: "", phone: "", zip: "" };
+                this.showProduct = true;
+                console.log("Form and cart reset completed.");
+              })
+              .catch(error => {
+                console.error("Error occurred during form submission:", error);
+                alert("Failed to place order. Please try again.");
+              });
+          } else {
+            console.warn("Form validation failed. Missing required fields.");
+            alert("Please fill all the fields.");
+          }
+        }
+      },
+      mounted() {
+        this.fetchProducts();
+      }
+    });
+  </script>
+</body>
+
+</html>
