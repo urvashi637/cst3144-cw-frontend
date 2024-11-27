@@ -22,7 +22,7 @@
     </header>
 
     <!-- Navigation Bar -->
-    <nav class="navbar">
+    <nav class="navbar" v-if="showProduct">
       <div class="search-sort-container">
         <div class="search-bar">
           <input type="text" v-model="searchQuery" placeholder="Search lessons..." />
@@ -35,7 +35,7 @@
             <option value="subject">Subject</option>
             <option value="Location">Location</option>
             <option value="availableInventory">Available Spaces</option>
-            <option value="rating">Ratings</option> <!-- Added sorting by ratings -->
+            <option value="rating">Rating</option> <!-- Added sorting by rating -->
           </select>
           <select v-model="sortOrder" class="sort-dropdown">
             <option value="asc">Ascending</option>
@@ -88,11 +88,11 @@
       <h3>Total: {{ cartTotal }} dhs</h3>
 
       <h2>Checkout</h2>
-      <p><strong>First Name:</strong> <input v-model="order.firstName" /></p>
-      <p><strong>Last Name:</strong> <input v-model="order.lastName" /></p>
-      <p><strong>Address:</strong><input v-model="order.address" /></p>
+      <p><strong>First Name:</strong> <input v-model="order.firstName"></p>
+      <p><strong>Last Name:</strong> <input v-model="order.lastName"></p>
+      <p><strong>Address:</strong><input v-model="order.address"></p>
       <p><strong>Phone number:</strong> <input v-model.number="order.phone" type="number" /></p>
-      <p><strong>Zip/Postal:</strong> <input v-model="order.zip" /></p>
+      <p><strong>Zip/Postal:</strong> <input v-model="order.zip"></p>
 
       <h2>Order Information</h2>
       <p>First Name: {{ order.firstName }}</p>
@@ -100,9 +100,7 @@
       <p>Address: {{ order.address }}</p>
       <p>Phone number: {{ order.phone }}</p>
       <p>Zip: {{ order.zip }}</p>
-
-      <!-- Place Order Button -->
-      <button v-if="isFormComplete" v-on:click="submitForm">Place Order</button>
+      <button v-on:click="submitForm">Place Order</button>
       <button v-on:click="showCheckout">Go back to products</button>
     </div>
   </div>
@@ -140,7 +138,7 @@
             else if (this.sortAttribute === 'subject') result = a.subject.localeCompare(b.subject);
             else if (this.sortAttribute === 'Location') result = a.Location.localeCompare(b.Location);
             else if (this.sortAttribute === 'availableInventory') result = a.availableInventory - b.availableInventory;
-            else if (this.sortAttribute === 'rating') result = (a.rating || 0) - (b.rating || 0); // Sort by ratings
+            else if (this.sortAttribute === 'rating') result = (a.rating || 0) - (b.rating || 0); // Added sorting for rating
             return this.sortOrder === 'asc' ? result : -result;
           });
         },
@@ -149,29 +147,14 @@
             lesson.subject.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
             lesson.Location.toLowerCase().includes(this.searchQuery.toLowerCase())
           );
-        },
-        isFormComplete() {
-          // Check if all required fields are filled
-          return (
-            this.order.firstName &&
-            this.order.lastName &&
-            this.order.address &&
-            this.order.phone &&
-            this.order.zip
-          );
         }
       },
       methods: {
         fetchProducts() {
-          fetch("http://localhost:3000/products")
+          fetch("http://localhost:3000/products") // Corrected endpoint
             .then(response => response.json())
-            .then(data => {
-              this.lessons = data;
-            })
-            .catch(error => {
-              console.error("Error fetching products:", error);
-              alert("Failed to load products.");
-            });
+            .then(data => this.lessons = data)
+            .catch(error => alert("Failed to load products. Please try again later."));
         },
         generateRowIndices() {
           const rows = [];
@@ -218,26 +201,29 @@
                 lessonId: item.lesson.id,
                 subject: item.lesson.subject,
                 price: item.lesson.price,
-                quantity: item.quantity
-              }))
+                quantity: item.quantity,
+              })),
+              total: this.cartTotal,
             };
-            console.log('Order submitted:', orderDetails);
-            alert('Order placed successfully!');
-            this.resetOrder();
+            fetch("http://localhost:3000/collection/orders", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(orderDetails),
+            })
+              .then(response => {
+                if (!response.ok) throw new Error("Failed to place the order.");
+                alert("Your order has been placed!");
+                this.cart = [];
+                this.order = { firstName: "", lastName: "", address: "", phone: "", zip: "" };
+                this.showProduct = true;
+              })
+              .catch(error => alert("Something went wrong. Please try again later."));
+          } else {
+            alert("Please fill out all fields before submitting your order.");
           }
-        },
-        resetOrder() {
-          this.cart = [];
-          this.order = {
-            firstName: "",
-            lastName: "",
-            address: "",
-            phone: "",
-            zip: ""
-          };
         }
       },
-      created() {
+      mounted() {
         this.fetchProducts();
       }
     });
