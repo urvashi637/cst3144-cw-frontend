@@ -35,6 +35,7 @@
             <option value="subject">Subject</option>
             <option value="Location">Location</option>
             <option value="availableInventory">Available Spaces</option>
+            <option value="rating">Ratings</option> <!-- Added sorting by ratings -->
           </select>
           <select v-model="sortOrder" class="sort-dropdown">
             <option value="asc">Ascending</option>
@@ -137,6 +138,7 @@
             else if (this.sortAttribute === 'subject') result = a.subject.localeCompare(b.subject);
             else if (this.sortAttribute === 'Location') result = a.Location.localeCompare(b.Location);
             else if (this.sortAttribute === 'availableInventory') result = a.availableInventory - b.availableInventory;
+            else if (this.sortAttribute === 'rating') result = (a.rating || 0) - (b.rating || 0); // Sort by ratings
             return this.sortOrder === 'asc' ? result : -result;
           });
         },
@@ -149,20 +151,14 @@
       },
       methods: {
         fetchProducts() {
-          fetch("http://localhost:3000/products") // Corrected endpoint
-            .then(response => {
-              if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-              }
-              return response.json();
-            })
+          fetch("http://localhost:3000/products")
+            .then(response => response.json())
             .then(data => {
-              console.log("Fetched products:", data); // Debugging log
-              this.lessons = data; // Assuming "lessons" is the variable to hold the product list
+              this.lessons = data;
             })
             .catch(error => {
               console.error("Error fetching products:", error);
-              alert("Failed to load products. Please try again later.");
+              alert("Failed to load products.");
             });
         },
         generateRowIndices() {
@@ -202,64 +198,34 @@
         showCheckout() {
           this.showProduct = !this.showProduct;
         },
-
         submitForm() {
-          console.log("Submit form initiated. Current order:", this.order);
-          console.log("Cart contents:", this.cart);
-
-          // Check if all required fields are filled
           if (this.order.firstName && this.order.lastName && this.order.address && this.order.phone && this.order.zip) {
-            console.log("Order form validation passed.");
-
             const orderDetails = {
               ...this.order,
               cart: this.cart.map(item => ({
                 lessonId: item.lesson.id,
-                subject: item.lesson.subject, // Include lesson name here
-                price: item.lesson.price, // Include price
-                quantity: item.quantity, // Include quantity
+                subject: item.lesson.subject,
+                price: item.lesson.price,
+                quantity: item.quantity,
               })),
               total: this.cartTotal,
             };
-
-            console.log("Order details prepared:", orderDetails);
-
             fetch("http://localhost:3000/collection/orders", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify(orderDetails),
             })
               .then(response => {
-                console.log("Server response received. Status code:", response.status);
-                if (!response.ok) {
-                  console.error("Server responded with an error. Status code:", response.status);
-                  throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                return response.json();
+                if (response.ok) alert("Order placed successfully!");
+                else alert("Failed to place order.");
               })
-              .then(data => {
-                console.log("Server returned data:", data);
-                alert("Order placed successfully!");
-
-                // Clear the cart and reset the order form
-                this.cart = [];
-                this.order = { firstName: "", lastName: "", address: "", phone: "", zip: "" };
-                this.showProduct = true;
-                console.log("Form and cart reset completed.");
-              })
-              .catch(error => {
-                console.error("Error occurred during form submission:", error);
-                alert("Failed to place order. Please try again.");
-              });
-          } else {
-            console.warn("Form validation failed. Missing required fields.");
-            alert("Please fill all the fields.");
-          }
+              .catch(error => console.error("Order submission error:", error));
+          } else alert("Please fill in all required fields.");
         }
       },
       mounted() {
         this.fetchProducts();
-      }
+      },
     });
   </script>
 </body>
