@@ -174,15 +174,66 @@ main {
     margin-right: 10px; /* Space between image and details */
 }
 
-.lesson-image img {
-    width: 100%; /* Make image responsive */
-    height: auto; /* Maintain aspect ratio */
-}
-
-.lesson-details {
-    flex: 1; /* Take the remaining space */
-}
-
+.quantity-delete-box {
+    display: flex;
+    align-items: center;
+    gap: 5px; /* Reduce gap between elements */
+    border: 1px solid #ddd;
+    padding: 3px 5px; /* Smaller padding for a compact box */
+    border-radius: 5px;
+    background-color: #f9f9f9;
+    width: fit-content; /* Ensures box size fits its contents */
+  }
+  
+  .quantity-button {
+    background-color: #f0f0f0;
+    border: 1px solid #ccc;
+    padding: 3px 8px; /* Smaller padding for compact buttons */
+    font-size: 14px; /* Reduce font size */
+    cursor: pointer;
+  }
+  
+  .quantity-button:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+  
+  .quantity-display {
+    padding: 0 5px; /* Smaller padding for compact spacing */
+    font-size: 14px; /* Reduce font size */
+  }
+  
+  .delete-button {
+    background: none;
+    border: none;
+    color: #ff0000;
+    font-size: 16px; /* Reduce size of delete icon */
+    cursor: pointer;
+  }
+  
+  .delete-button:hover {
+    color: #cc0000;
+  }
+  
+  .cart-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px; /* Reduce padding for compactness */
+    border-bottom: 1px solid #ddd;
+  }
+  
+  .cart-item-info {
+    display: flex;
+    gap: 10px; /* Reduce gap between image and details */
+  }
+  
+  .lesson-image img {
+    width: 80px; /* Reduce image size */
+    height: auto;
+    border-radius: 5px;
+  }
+  
 /* Styles for lesson buttons */
 .lesson-info button {
     padding: 5px 8px;
