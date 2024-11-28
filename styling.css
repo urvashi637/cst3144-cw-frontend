@@ -352,4 +352,21 @@ button:disabled {
     color: lightgray;
     font-size: 1.2em;
   }
-    
+/* Add styles for the Go back button */
+.go-back-button {
+    position: absolute;
+    top: 170px;
+    right: 110px;
+    padding: 10px 20px;
+    background-color: #007BFF;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+  }
+  
+  .go-back-button:hover {
+    background-color: #0056b3;
+  }
+  
