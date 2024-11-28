@@ -77,14 +77,32 @@
     <!-- Checkout Section -->
     <div v-else class="checkout-page">
       <h2>Lessons in Cart</h2>
-      <ul>
-        <li v-for="(item, index) in cart" :key="item.lesson.id">
-          {{ item.lesson.subject }} - {{ item.lesson.price }} dhs (Quantity: {{ item.quantity }})
-          <button v-on:click="decreaseQuantity(index)" v-if="item.quantity > 1">-</button>
-          <button v-on:click="increaseQuantity(index)" v-if="item.quantity < 5">+</button>
-          <button v-on:click="removeFromCart(index)">Remove</button>
-        </li>
-      </ul>
+      <div v-for="(item, index) in cart" :key="item.lesson.id" class="cart-item">
+        <div class="cart-item-info">
+          <!-- Lesson Image -->
+          <figure class="lesson-image">
+            <img v-bind:src="item.lesson.image" :alt="item.lesson.subject + ' Image'" />
+          </figure>
+          <div class="lesson-details">
+            <!-- Lesson Subject -->
+            <h3>{{ item.lesson.subject }}</h3>
+            <p>Price: {{ item.lesson.price }} dhs</p>
+          </div>
+        </div>
+      
+        <!-- Combined Quantity and Delete Controls -->
+        <div class="quantity-delete-box">
+          <button v-on:click="decreaseQuantity(index)" :disabled="item.quantity <= 1" class="quantity-button">-</button>
+          <span class="quantity-display">{{ item.quantity }}</span>
+          <button v-on:click="increaseQuantity(index)" :disabled="item.quantity >= 5 || item.lesson.availableInventory <= 0" class="quantity-button">+</button>
+          <button v-on:click="removeFromCart(index)" class="delete-button">
+            <span class="fas fa-trash"></span>
+          </button>
+        </div>
+      </div>
+      
+      
+
       <h3>Total: {{ cartTotal }} dhs</h3>
 
       <h2>Checkout</h2>
@@ -149,7 +167,6 @@
             lesson.Location.toLowerCase().includes(this.searchQuery.toLowerCase())
           );
         },
-        // Computed property to check if all fields are filled out for the order
         isFormValid() {
           return (
             this.order.firstName.trim() &&
@@ -198,14 +215,11 @@
             item.lesson.availableInventory++;
           }
         },
-        canAddToCart(lesson) {
-          return lesson.availableInventory > 0;
-        },
         showCheckout() {
-          this.showProduct = !this.showProduct;
+          this.showProduct = false;
         },
         submitForm() {
-          if (this.order.firstName && this.order.lastName && this.order.address && this.order.phone && this.order.zip) {
+          if (this.isFormValid) {
             const orderDetails = {
               ...this.order,
               cart: this.cart.map(item => ({
@@ -216,17 +230,18 @@
               }))
             };
             console.log("Order submitted:", orderDetails);
-            // Optionally clear cart and form here
-            this.cart = [];
-            this.order = { firstName: "", lastName: "", address: "", phone: "", zip: "" };
-            this.showProduct = true;
+            this.cart = []; // Empty the cart
+            this.order = { firstName: "", lastName: "", address: "", phone: "", zip: "" }; // Clear order form
             alert('Order placed successfully!');
           } else {
             alert('Please fill in all fields.');
           }
+        },
+        canAddToCart(lesson) {
+          return lesson.availableInventory > 0;
         }
       },
-      created() {
+      mounted() {
         this.fetchProducts();
       }
     });
