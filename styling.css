@@ -229,7 +229,7 @@ main {
   }
   
   .lesson-image img {
-    width: 80px; /* Reduce image size */
+    width: 150px; /* Reduce image size */
     height: auto;
     border-radius: 5px;
   }
