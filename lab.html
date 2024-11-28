@@ -214,6 +214,17 @@
         showCheckout() {
           this.showProduct = !this.showProduct;
         },
+        resetCartAndForm() {
+          this.cart = [];
+          this.order = {
+            firstName: "",
+            lastName: "",
+            address: "",
+            phone: "",
+            zip: ""
+          };
+          this.showProduct = true;
+        },
         submitForm() {
           if (this.order.firstName && this.order.lastName && this.order.address && this.order.phone && this.order.zip) {
             const orderDetails = {
@@ -226,22 +237,29 @@
               })),
               total: this.cartTotal,
             };
+
             fetch("http://localhost:3000/collection/orders", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify(orderDetails),
             })
               .then(response => {
-                if (response.ok) alert("Order placed successfully!");
-                else alert("Failed to place order.");
+                if (response.ok) {
+                  alert("Order placed successfully!");
+                  this.resetCartAndForm();
+                } else {
+                  alert("Failed to place order.");
+                }
               })
               .catch(error => console.error("Order submission error:", error));
-          } else alert("Please fill in all required fields.");
+          } else {
+            alert("Please fill in all required fields.");
+          }
         }
       },
       mounted() {
         this.fetchProducts();
-      },
+      }
     });
   </script>
 </body>
