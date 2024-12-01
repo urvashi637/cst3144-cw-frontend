@@ -7,10 +7,10 @@ let webstore = new Vue({
       sortOrder: 'asc',
       searchQuery: "", // For filtering by subject and location
       searchFilters: {
-          id: "",
-          quantity: "",
-          subject: "",
-          location: ""
+        id: "",
+        quantity: "",
+        subject: "",
+        location: ""
       },
       lessons: [],
       cart: [],
@@ -49,7 +49,20 @@ let webstore = new Vue({
     },
     methods: {
       fetchProducts() {
-        // Construct the search URL with query parameters
+        // Fetch all products from the backend initially (no filtering)
+        fetch("http://localhost:3000/products")
+          .then(response => response.json())
+          .then(data => {
+            this.lessons = data;
+          })
+          .catch(error => {
+            console.error("Error fetching products:", error);
+            alert("Failed to load products.");
+          });
+      },
+  
+      searchProducts() {
+        // Construct the search URL with query parameters based on searchFilters
         const { id, quantity, subject, location } = this.searchFilters;
         let searchUrl = `http://localhost:3000/search?`;
   
@@ -64,30 +77,34 @@ let webstore = new Vue({
         fetch(searchUrl)
           .then(response => response.json())
           .then(data => {
-            this.lessons = data;
+            this.lessons = data; // Update lessons with search results
           })
           .catch(error => {
-            console.error("Error fetching products:", error);
-            alert("Failed to load products.");
+            console.error("Error fetching search results:", error);
+            alert("Failed to search for products.");
           });
       },
+  
       generateRowIndices() {
         const rows = [];
         const lessonsPerRow = 2;
         for (let i = 0; i < this.filteredLessons.length; i += lessonsPerRow) rows.push(i);
         return rows;
       },
+  
       addToCart(lesson) {
         const found = this.cart.find(item => item.lesson.id === lesson.id);
         if (found) found.quantity++;
         else this.cart.push({ lesson, quantity: 1 });
         lesson.availableInventory--;
       },
+  
       removeFromCart(index) {
         const item = this.cart[index];
         item.lesson.availableInventory += item.quantity;
         this.cart.splice(index, 1);
       },
+  
       increaseQuantity(index) {
         const item = this.cart[index];
         if (item.lesson.availableInventory > 0) {
@@ -95,6 +112,7 @@ let webstore = new Vue({
           item.lesson.availableInventory--;
         }
       },
+  
       decreaseQuantity(index) {
         const item = this.cart[index];
         if (item.quantity > 1) {
@@ -102,12 +120,15 @@ let webstore = new Vue({
           item.lesson.availableInventory++;
         }
       },
+  
       canAddToCart(lesson) {
         return lesson.availableInventory > 0;
       },
+  
       showCheckout() {
         this.showProduct = !this.showProduct;
       },
+  
       resetCartAndForm() {
         this.cart = [];
         this.order = {
@@ -119,6 +140,7 @@ let webstore = new Vue({
         };
         this.showProduct = true;
       },
+  
       submitForm() {
         if (this.order.firstName && this.order.lastName && this.order.address && this.order.phone && this.order.zip) {
           const orderDetails = {
