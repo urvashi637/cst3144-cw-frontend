@@ -62,28 +62,32 @@ let webstore = new Vue({
       },
   
       searchProducts() {
-        // Construct the search URL with query parameters based on searchFilters
         const { id, quantity, subject, location } = this.searchFilters;
-        let searchUrl = `http://localhost:3000/search?`;
-  
+        let searchUrl = "http://localhost:3000/search?";
+      
         if (id) searchUrl += `id=${id}&`;
         if (quantity) searchUrl += `quantity=${quantity}&`;
         if (subject) searchUrl += `subject=${subject}&`;
         if (location) searchUrl += `location=${location}&`;
-  
-        // Remove trailing '&'
-        searchUrl = searchUrl.replace(/&$/, '');
-  
+      
+        // Remove trailing '&' or '?'
+        searchUrl = searchUrl.replace(/(&|\?)$/, '');
+      
         fetch(searchUrl)
           .then(response => response.json())
           .then(data => {
-            this.lessons = data; // Update lessons with search results
+            if (data.error) {
+              alert(data.error);
+            } else {
+              this.lessons = data; // Update lessons with search results
+            }
           })
           .catch(error => {
             console.error("Error fetching search results:", error);
             alert("Failed to search for products.");
           });
-      },
+      }
+      ,
   
       generateRowIndices() {
         const rows = [];
