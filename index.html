@@ -51,7 +51,7 @@
         <div class="lesson-row" v-for="(startIndex, rowIndex) in generateRowIndices()" :key="'row-' + rowIndex">
           <div class="lesson-info" v-for="lesson in filteredLessons.slice(startIndex, startIndex + 2)" :key="lesson.id">
             <figure class="lesson-image">
-              <img v-bind:src="lesson.image" :alt="lesson.subject + ' Image'" />
+              <img v-bind:src="https://cst3144-cw-backend-4.onrender.com/lesson.image" :alt="lesson.subject + ' Image'" />
             </figure>
             <div class="lesson-details">
               <h2 v-text="lesson.subject"></h2>
@@ -83,7 +83,7 @@
       <div v-for="(item, index) in cart" :key="item.lesson.id" class="cart-item">
         <div class="cart-item-info">
           <figure class="lesson-image">
-            <img v-bind:src="item.lesson.image" :alt="item.lesson.subject + ' Image'" />
+            <img v-bind:src="https://cst3144-cw-backend-4.onrender.com/item.lesson.image" :alt="item.lesson.subject + ' Image'" />
           </figure>
           <div class="lesson-details">
             <h3>{{ item.lesson.subject }}</h3>
